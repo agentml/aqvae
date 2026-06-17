@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pt
+data/
+outputs/
+logs/
+wandb/
+related_paper/Attractor/
+.ipynb_checkpoints/
+.DS_Store
