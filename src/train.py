@@ -24,7 +24,7 @@ from .dataset import DSprites
 from .dataset_shapes3d import Shapes3D, prep_batch
 from .model import VAE, vae_loss
 from .model_vqvae import VQVAE, vqvae_loss
-from .model_attractor_vae import AttractorVAE, attractor_loss
+from .model_attractor_vae import AttractorVAE, attractor_loss, aqvae_loss
 from .utils import make_grid, save_gray_png, save_rgb_png
 
 
@@ -64,6 +64,10 @@ def parse_args():
     p.add_argument("--solver", choices=["fpi", "anderson"], default="fpi")
     p.add_argument("--solver-max-iter", type=int, default=64)
     p.add_argument("--compile", action="store_true", help="torch.compile 모델")
+    # categorical AQ-VAE (변분)
+    p.add_argument("--variational", action="store_true", help="Categorical AQ-VAE(KL+prior)")
+    p.add_argument("--beta-kl", type=float, default=0.5, help="KL 가중치 최대값")
+    p.add_argument("--beta-kl-warmup", type=int, default=20, help="β_KL 0→max 워밍업 에폭")
     p.add_argument("--num-workers", type=int, default=8)
     p.add_argument("--log-every", type=int, default=200)
     p.add_argument("--seed", type=int, default=0)
@@ -118,19 +122,31 @@ def build_model(args, in_channels):
                         beta=args.beta_start, context_norm=True,
                         context_scale=args.context_scale, pattern_scale=args.pattern_scale,
                         unit_patterns=True, solver=args.solver,
-                        solver_max_iter=args.solver_max_iter)
+                        solver_max_iter=args.solver_max_iter, variational=args.variational)
 
 
-def compute_loss(args, model, out, x, recon_type):
-    """반환: (loss, recon, aux, aux_name)."""
+def compute_loss(args, core, out, x, recon_type, beta_kl=0.0):
+    """반환: (loss, recon, aux, aux_name). core=실제 모듈(prior_logits 접근용)."""
     if args.arch == "vae":
         loss, recon, kl = vae_loss(out, x, beta=args.beta, recon_type=recon_type)
         return loss, recon, kl, "kl"
     if args.arch == "vqvae":
         loss, recon, vq = vqvae_loss(out, x, commitment=args.commitment, recon_type=recon_type)
         return loss, recon, vq, "vq"
+    if args.variational:
+        loss, recon, kl = aqvae_loss(out, x, core.prior_logits, beta_kl, recon_type=recon_type)
+        return loss, recon, kl, "kl"
     loss, recon, disc = attractor_loss(out, x, recon_type=recon_type)
     return loss, recon, disc, "dist"
+
+
+def beta_kl_at_epoch(args, epoch):
+    """β_KL 선형 워밍업 0→beta_kl (variational 일 때만)."""
+    if not (args.arch == "attractor" and args.variational):
+        return 0.0
+    if args.beta_kl_warmup <= 0:
+        return args.beta_kl
+    return args.beta_kl * min(1.0, (epoch + 1) / args.beta_kl_warmup)
 
 
 def setup_distributed():
@@ -194,13 +210,14 @@ def main():
             sampler.set_epoch(epoch)
         t0 = time.time()
         beta = beta_at_epoch(args, epoch)
+        bkl = beta_kl_at_epoch(args, epoch)
         fwd = {} if beta is None else {"beta": beta}
         run_loss = run_recon = run_aux = 0.0
         aux_name = "aux"
         for step, x in enumerate(loader):
             x = prep_batch(x, device, uint8)
             out = model(x, **fwd)
-            loss, recon, aux, aux_name = compute_loss(args, model, out, x, recon_type)
+            loss, recon, aux, aux_name = compute_loss(args, core, out, x, recon_type, bkl)
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
@@ -226,6 +243,9 @@ def main():
                              for j in range(core.head.n_factors))
             rec["beta"] = beta; rec["active"] = active
             extra = f" beta={beta:.2f} active={active}/{args.n_factors*args.n_patterns}"
+            if args.variational:
+                rec["beta_kl"] = bkl
+                extra += f" β_kl={bkl:.3f}"
         history.append(rec)
         log(f"[epoch {epoch}] loss={ep_loss:.3f} recon={ep_recon:.3f} "
             f"{aux_name}={ep_aux:.3f}{extra} ({time.time()-t0:.1f}s)")

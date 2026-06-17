@@ -125,6 +125,16 @@ class FactorizedHopfield(nn.Module):
         d = torch.cdist(Yf.transpose(0, 1), P.transpose(1, 2))  # (F, B, K)
         return d.argmin(-1).transpose(0, 1)               # (B, F)
 
+    def soft_codes(self, Y: torch.Tensor, context=None, beta=None) -> torch.Tensor:
+        """고정점 Y 에서 factor별 softmax 코드 w* = softmax(β Xᵀ(Y+c)). (B, dim)->(B, F, K).
+        Y·context 가 grad 를 들고 있으면 w* 도 미분가능(Categorical VAE posterior)."""
+        B = Y.size(0)
+        Yf = Y.view(B, self.n_factors, self.factor_dim)
+        q = Yf if context is None else Yf + context.view(B, self.n_factors, self.factor_dim)
+        P = self._stacked_patterns()                      # (F, D, K)
+        sim = torch.einsum("bfd,fdk->bfk", q, P)          # (B, F, K)
+        return F.softmax(self._beta(beta) * sim, dim=-1)
+
     def grad_params(self, context):
         """IFT 라우팅 대상: context + 각 factor 의 patterns·log_beta."""
         ps = [context]

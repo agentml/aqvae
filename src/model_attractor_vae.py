@@ -25,6 +25,7 @@ class AttractorOutput:
     indices: torch.Tensor        # (B, n_factors)   factor별 최근접 패턴(진단용, non-diff)
     disc: torch.Tensor           # 평균 dist→pat(이산성 진단; 작을수록 이산)
     info: dict                   # solver 정보
+    w: torch.Tensor = None       # (B, n_factors, K) softmax 코드 = categorical posterior(변분용)
 
 
 class AttractorVAE(nn.Module):
@@ -34,12 +35,17 @@ class AttractorVAE(nn.Module):
                  solver_max_iter: int = 16, solver_tol: float = 1e-4,
                  bw_type: str = "onestep", adjoint_clip: float = 10.0,
                  context_norm: bool = False, context_scale: float = 3.0,
-                 unit_patterns: bool = False):
+                 unit_patterns: bool = False, variational: bool = False):
         super().__init__()
         assert latent_dim % n_factors == 0, "latent_dim 은 n_factors 로 나눠떨어져야 함"
         self.latent_dim = latent_dim
         self.in_channels = in_channels
         self.beta = beta
+        self.variational = variational      # True면 w* 노출 + factor별 학습 prior(KL용)
+        self.n_factors = n_factors
+        self.n_patterns = n_patterns
+        if variational:
+            self.prior_logits = nn.Parameter(torch.zeros(n_factors, n_patterns))
         self.context_norm = context_norm    # factor별 c 를 고정 노름으로 묶어 collapse 방지
         self.context_scale = context_scale
         self.solver = solver
@@ -91,11 +97,25 @@ class AttractorVAE(nn.Module):
             beta=self.beta if beta is None else beta,
             solver=self.solver, max_iter=self.solver_max_iter, tol=self.solver_tol)
         recon_logits = self.decode(y_star)                    # y* 를 그대로 디코딩(미분가능)
+        w = None
+        if self.variational:
+            b = self.beta if beta is None else beta
+            w = self.head.soft_codes(y_star, c, beta=b)       # (B,F,K) 미분가능 posterior
         with torch.no_grad():
             indices = self.head.assign(y_star)                # 진단용(non-diff)
             disc = self._discreteness(y_star, indices)        # 평균 dist→pat
         return AttractorOutput(recon_logits=recon_logits, c=c, y_star=y_star,
-                               indices=indices, disc=disc, info=info)
+                               indices=indices, disc=disc, info=info, w=w)
+
+    @torch.no_grad()
+    def generate(self, n: int, device, beta=None):
+        """학습된 factor별 prior 에서 코드 샘플 → 패턴 디코딩 → 새 이미지 (변분 모델)."""
+        assert self.variational, "generate 는 variational=True 에서만"
+        pri = F.softmax(self.prior_logits, dim=-1)            # (F, K)
+        idx = torch.multinomial(pri, n, replacement=True)     # (F, n)
+        P = self.head._stacked_patterns()                     # (F, D, K)
+        y = torch.stack([P[f, :, idx[f]].t() for f in range(self.n_factors)], dim=1)  # (n,F,D)
+        return torch.sigmoid(self.decode(y.reshape(n, -1).to(device)))
 
     @torch.no_grad()
     def _discreteness(self, y_star: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
@@ -108,13 +128,28 @@ class AttractorVAE(nn.Module):
         return (yf - gathered).norm(dim=-1).mean()
 
 
-def attractor_loss(out: AttractorOutput, x: torch.Tensor, recon_type: str = "gaussian"):
-    """deterministic AE: 재구성 손실만. aux = 평균 dist→pat(이산성 진단, 손실 아님)."""
+def _recon_loss(out, x, recon_type):
     B = x.size(0)
     if recon_type == "gaussian":
-        recon = F.mse_loss(torch.sigmoid(out.recon_logits), x, reduction="sum") / B
-    elif recon_type == "bernoulli":
-        recon = F.binary_cross_entropy_with_logits(out.recon_logits, x, reduction="sum") / B
-    else:
-        raise ValueError(f"unknown recon_type: {recon_type}")
+        return F.mse_loss(torch.sigmoid(out.recon_logits), x, reduction="sum") / B
+    if recon_type == "bernoulli":
+        return F.binary_cross_entropy_with_logits(out.recon_logits, x, reduction="sum") / B
+    raise ValueError(f"unknown recon_type: {recon_type}")
+
+
+def attractor_loss(out: AttractorOutput, x: torch.Tensor, recon_type: str = "gaussian"):
+    """deterministic AE: 재구성 손실만. aux = 평균 dist→pat(이산성 진단, 손실 아님)."""
+    recon = _recon_loss(out, x, recon_type)
     return recon, recon, out.disc
+
+
+def aqvae_loss(out: AttractorOutput, x: torch.Tensor, prior_logits: torch.Tensor,
+               beta_kl: float, recon_type: str = "gaussian"):
+    """Categorical AQ-VAE: recon(y* 디코딩) + β_KL·Σ_factor KL(Cat(w*) ‖ Cat(prior)).
+    KL closed-form, w* 미분가능 → 샘플링 gradient 불필요. 반환 (loss, recon, kl)."""
+    recon = _recon_loss(out, x, recon_type)
+    w = out.w.clamp_min(1e-9)                                 # (B, F, K)
+    logp = F.log_softmax(prior_logits, dim=-1).unsqueeze(0)   # (1, F, K)
+    kl = (w * (w.log() - logp)).sum(-1)                       # (B, F)  per-factor KL
+    kl = kl.sum(-1).mean()                                    # factor 합, 배치 평균
+    return recon + beta_kl * kl, recon, kl
