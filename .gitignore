@@ -8,3 +8,4 @@ wandb/
 related_paper/Attractor/
 .ipynb_checkpoints/
 .DS_Store
+docs/conversation_raw.md
