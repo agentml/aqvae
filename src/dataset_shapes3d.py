@@ -54,11 +54,13 @@ class Shapes3D(Dataset):
     멀티프로세싱 안전(h5py 워커 파일락 데드락 회피)하고 HDF5 랜덤리드보다 빠르다.
     """
 
-    def __init__(self, data_dir: str = "data", return_factors: bool = False):
+    def __init__(self, data_dir: str = "data", return_factors: bool = False,
+                 uint8: bool = False):
         import h5py  # 지연 import (의존성 격리)
 
         self.path = download_shapes3d(data_dir)
         self.return_factors = return_factors
+        self.uint8 = uint8                    # True면 (64,64,3) uint8 반환 → GPU 배치 변환(빠름)
 
         with h5py.File(self.path, "r") as f:
             self.images = f["images"][:]      # (N,64,64,3) uint8 — RAM 적재
@@ -69,9 +71,20 @@ class Shapes3D(Dataset):
         return self.images.shape[0]
 
     def __getitem__(self, idx: int):
-        img = self.images[idx].astype(np.float32) / 255.0          # (64,64,3) [0,1]
-        img = torch.from_numpy(img).permute(2, 0, 1).contiguous()  # (3,64,64)
+        if self.uint8:
+            img = torch.from_numpy(self.images[idx])               # (64,64,3) uint8, 변환 없음
+        else:
+            arr = self.images[idx].astype(np.float32) / 255.0      # (64,64,3) [0,1]
+            img = torch.from_numpy(arr).permute(2, 0, 1).contiguous()  # (3,64,64)
         if self.return_factors:
             factors = torch.from_numpy(self.factor_indices[idx])   # (6,) int64
             return img, factors
         return img
+
+
+def prep_batch(x: torch.Tensor, device, uint8: bool) -> torch.Tensor:
+    """배치를 device 로. uint8(B,64,64,3) 이면 GPU 에서 (B,3,64,64) float[0,1] 로 변환."""
+    x = x.to(device, non_blocking=True)
+    if uint8:
+        x = x.permute(0, 3, 1, 2).float().div_(255.0)
+    return x

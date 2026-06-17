@@ -21,7 +21,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 
 from .dataset import DSprites
-from .dataset_shapes3d import Shapes3D
+from .dataset_shapes3d import Shapes3D, prep_batch
 from .model import VAE, vae_loss
 from .model_vqvae import VQVAE, vqvae_loss
 from .model_attractor_vae import AttractorVAE, attractor_loss
@@ -63,6 +63,7 @@ def parse_args():
                    help="anneal-epochs 중 soft 유지 비율")
     p.add_argument("--solver", choices=["fpi", "anderson"], default="fpi")
     p.add_argument("--solver-max-iter", type=int, default=64)
+    p.add_argument("--compile", action="store_true", help="torch.compile 모델")
     p.add_argument("--num-workers", type=int, default=8)
     p.add_argument("--log-every", type=int, default=200)
     p.add_argument("--seed", type=int, default=0)
@@ -99,9 +100,10 @@ def save_recon_grid(model, x, path, in_channels: int, n: int = 8, beta=None):
 
 
 def build_dataset(args):
+    """반환 (dataset, in_channels, uint8). uint8=True 면 GPU 에서 배치 변환."""
     if args.dataset == "dsprites":
-        return DSprites(args.data_dir), 1
-    return Shapes3D(args.data_dir), 3
+        return DSprites(args.data_dir), 1, False
+    return Shapes3D(args.data_dir, uint8=True), 3, True
 
 
 def build_model(args, in_channels):
@@ -164,7 +166,7 @@ def main():
         f"z={args.latent_dim} world={world} batch/gpu={args.batch_size} "
         f"eff_batch={args.batch_size*world} patience={args.patience}")
 
-    dataset, in_channels = build_dataset(args)
+    dataset, in_channels, uint8 = build_dataset(args)
     sampler = DistributedSampler(dataset, shuffle=True) if is_dist else None
     loader = DataLoader(
         dataset, batch_size=args.batch_size, shuffle=(sampler is None), sampler=sampler,
@@ -174,11 +176,12 @@ def main():
     log(f"[train] dataset={len(dataset)} batches/epoch/gpu={len(loader)} in_channels={in_channels}")
 
     core = build_model(args, in_channels).to(device)          # 실제 모듈(진단·저장용)
-    model = DDP(core, device_ids=[local], find_unused_parameters=True) if is_dist else core
+    train_model = torch.compile(core) if args.compile else core
+    model = DDP(train_model, device_ids=[local], find_unused_parameters=True) if is_dist else train_model
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     log(f"[train] params(M)={sum(p.numel() for p in core.parameters())/1e6:.3f}")
 
-    fixed_x = next(iter(loader)).to(device) if is_main else None   # rank0 진단용
+    fixed_x = prep_batch(next(iter(loader)), device, uint8) if is_main else None   # rank0 진단용
 
     best_loss = float("inf")
     best_epoch = -1
@@ -195,7 +198,7 @@ def main():
         run_loss = run_recon = run_aux = 0.0
         aux_name = "aux"
         for step, x in enumerate(loader):
-            x = x.to(device, non_blocking=True)
+            x = prep_batch(x, device, uint8)
             out = model(x, **fwd)
             loss, recon, aux, aux_name = compute_loss(args, model, out, x, recon_type)
             opt.zero_grad(set_to_none=True)
