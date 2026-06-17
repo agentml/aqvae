@@ -13,6 +13,7 @@
 - [ ] **P2 · soft target magnitude 정규화** (KL식이되 0이 아닌 target s로). 하드 context_norm 대신 학습이 스케일 자율 탐색. (출처: collapse_analysis §5.5, KL 논의)
 - [ ] **P3 · variational 확장.** Nam식 분포/생성 — 이산코드 prior, stochastic attractor. (출처: 설계 결정 (ii) 보류)
 - [ ] **P3 · 패턴 분리 정규화.** 패턴 간 4D 거리 최대화(codebook이 안 겹치게) → viz·retrieval 명료. (출처: viz "패턴 실제 근접")
+- [ ] **P2 · attractor를 layer화.** 단일 병목 고정점 → **재사용 가능한 `AttractorLayer`(nn.Module)로 추상화**해 적층/삽입 가능하게. 가능성: (a) 여러 attractor layer **스택**(deep/계층적 이산화 — 거친→세밀 코드), (b) encoder/decoder **중간 여러 지점**에 attractor 삽입, (c) DEQ식 다단 평형. 각 layer가 자체 패턴·β 보유. (출처: 사용자 제안)
 
 ## B. 평가·시각화 개선
 - [ ] **P2 · 궤적 viz 개선.** (a) 특정 factor 단독 확대, (b) step별 색농도(연→진) 방향성, (c) 활성 많은 factor는 2D 한계 → 3D/pairwise 투영 또는 endpoint→배정별 connector. (출처: 궤적 viz, "별 거리/색 혼동")
