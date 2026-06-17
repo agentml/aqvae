@@ -16,7 +16,9 @@ import os
 import time
 
 import torch
-from torch.utils.data import DataLoader
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, DistributedSampler
 
 from .dataset import DSprites
 from .dataset_shapes3d import Shapes3D
@@ -129,34 +131,54 @@ def compute_loss(args, model, out, x, recon_type):
     return loss, recon, disc, "dist"
 
 
+def setup_distributed():
+    """torchrun 환경이면 process group 초기화. 반환 (is_dist, rank, local_rank, world)."""
+    if "RANK" in os.environ and int(os.environ.get("WORLD_SIZE", "1")) > 1:
+        dist.init_process_group("nccl")
+        rank = dist.get_rank()
+        local = int(os.environ["LOCAL_RANK"])
+        torch.cuda.set_device(local)
+        return True, rank, local, dist.get_world_size()
+    return False, 0, 0, 1
+
+
 def main():
     args = parse_args()
-    torch.manual_seed(args.seed)
+    is_dist, rank, local, world = setup_distributed()
+    is_main = rank == 0
+    device = torch.device("cuda", local) if is_dist else torch.device(args.device)
+    torch.manual_seed(args.seed + rank)
     recon_type = args.recon
     if recon_type == "auto":
         recon_type = "bernoulli" if args.dataset == "dsprites" else "gaussian"
 
+    def log(*a):
+        if is_main:
+            print(*a, flush=True)
+
     run_name = args.run_name or f"{args.arch}_{args.dataset}_z{args.latent_dim}"
     out_dir = os.path.join(args.out_dir, run_name)
-    os.makedirs(out_dir, exist_ok=True)
-    print(f"[train] run={run_name} arch={args.arch} dataset={args.dataset} "
-          f"recon={recon_type} device={args.device} z={args.latent_dim} "
-          f"patience={args.patience} min_delta={args.min_delta}")
+    if is_main:
+        os.makedirs(out_dir, exist_ok=True)
+    log(f"[train] run={run_name} arch={args.arch} dataset={args.dataset} recon={recon_type} "
+        f"z={args.latent_dim} world={world} batch/gpu={args.batch_size} "
+        f"eff_batch={args.batch_size*world} patience={args.patience}")
 
     dataset, in_channels = build_dataset(args)
+    sampler = DistributedSampler(dataset, shuffle=True) if is_dist else None
     loader = DataLoader(
-        dataset, batch_size=args.batch_size, shuffle=True,
+        dataset, batch_size=args.batch_size, shuffle=(sampler is None), sampler=sampler,
         num_workers=args.num_workers, pin_memory=True, drop_last=True,
         persistent_workers=args.num_workers > 0,
     )
-    print(f"[train] dataset size={len(dataset)} batches/epoch={len(loader)} "
-          f"in_channels={in_channels}")
+    log(f"[train] dataset={len(dataset)} batches/epoch/gpu={len(loader)} in_channels={in_channels}")
 
-    model = build_model(args, in_channels).to(args.device)
+    core = build_model(args, in_channels).to(device)          # 실제 모듈(진단·저장용)
+    model = DDP(core, device_ids=[local], find_unused_parameters=True) if is_dist else core
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    print(f"[train] params(M)={sum(p.numel() for p in model.parameters())/1e6:.3f}")
+    log(f"[train] params(M)={sum(p.numel() for p in core.parameters())/1e6:.3f}")
 
-    fixed_x = next(iter(loader)).to(args.device)  # 재구성 시각화용 고정 배치
+    fixed_x = next(iter(loader)).to(device) if is_main else None   # rank0 진단용
 
     best_loss = float("inf")
     best_epoch = -1
@@ -165,71 +187,76 @@ def main():
 
     for epoch in range(args.max_epochs):
         model.train()
+        if is_dist:
+            sampler.set_epoch(epoch)
         t0 = time.time()
-        beta = beta_at_epoch(args, epoch)                 # attractor 면 현재 β, 아니면 None
+        beta = beta_at_epoch(args, epoch)
         fwd = {} if beta is None else {"beta": beta}
         run_loss = run_recon = run_aux = 0.0
         aux_name = "aux"
         for step, x in enumerate(loader):
-            x = x.to(args.device, non_blocking=True)
+            x = x.to(device, non_blocking=True)
             out = model(x, **fwd)
             loss, recon, aux, aux_name = compute_loss(args, model, out, x, recon_type)
-
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
-
             run_loss += loss.item(); run_recon += recon.item(); run_aux += aux.item()
             if (step + 1) % args.log_every == 0:
-                print(f"  e{epoch} {step+1}/{len(loader)} loss={loss.item():.2f} "
-                      f"recon={recon.item():.2f} {aux_name}={aux.item():.2f}", flush=True)
+                log(f"  e{epoch} {step+1}/{len(loader)} loss={loss.item():.2f} "
+                    f"recon={recon.item():.2f} {aux_name}={aux.item():.2f}")
 
         nb = len(loader)
-        ep_loss, ep_recon, ep_aux = run_loss / nb, run_recon / nb, run_aux / nb
+        # epoch 평균을 전 rank 평균으로(early-stop 일관성)
+        stats = torch.tensor([run_loss, run_recon, run_aux], device=device) / nb
+        if is_dist:
+            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+            stats /= world
+        ep_loss, ep_recon, ep_aux = stats.tolist()
+
         rec = {"epoch": epoch, "loss": ep_loss, "recon": ep_recon, aux_name: ep_aux}
         extra = ""
-        if args.arch == "attractor":
+        if args.arch == "attractor" and is_main:
             with torch.no_grad():
-                oe = model(fixed_x, beta=beta)
+                oe = core(fixed_x, beta=beta)                 # unwrap: collective 없음
                 active = sum(int(oe.indices[:, j].unique().numel())
-                             for j in range(model.head.n_factors))
+                             for j in range(core.head.n_factors))
             rec["beta"] = beta; rec["active"] = active
             extra = f" beta={beta:.2f} active={active}/{args.n_factors*args.n_patterns}"
         history.append(rec)
-        print(f"[epoch {epoch}] loss={ep_loss:.3f} recon={ep_recon:.3f} "
-              f"{aux_name}={ep_aux:.3f}{extra} ({time.time()-t0:.1f}s)", flush=True)
+        log(f"[epoch {epoch}] loss={ep_loss:.3f} recon={ep_recon:.3f} "
+            f"{aux_name}={ep_aux:.3f}{extra} ({time.time()-t0:.1f}s)")
 
-        save_recon_grid(model, fixed_x, os.path.join(out_dir, f"recon_e{epoch:03d}.png"),
-                        in_channels, beta=beta)
-        with open(os.path.join(out_dir, "history.json"), "w") as f:
-            json.dump(history, f, indent=2)
+        if is_main:
+            save_recon_grid(core, fixed_x, os.path.join(out_dir, f"recon_e{epoch:03d}.png"),
+                            in_channels, beta=beta)
+            with open(os.path.join(out_dir, "history.json"), "w") as f:
+                json.dump(history, f, indent=2)
 
-        # ---- 수렴 판정 (early stopping). 어닐링 중에는 정지 카운트 안 함 ----
+        # ---- 수렴 판정 (ep_loss 가 전 rank 동일 → break 일관) ----
         annealing = args.arch == "attractor" and epoch < args.anneal_epochs
         if ep_loss < best_loss - args.min_delta:
             best_loss = ep_loss
             best_epoch = epoch
             epochs_no_improve = 0
-            torch.save(
-                {"model": model.state_dict(), "args": vars(args),
-                 "epoch": epoch, "loss": ep_loss},
-                os.path.join(out_dir, "ckpt_best.pt"),
-            )
+            if is_main:
+                torch.save({"model": core.state_dict(), "args": vars(args),
+                            "epoch": epoch, "loss": ep_loss},
+                           os.path.join(out_dir, "ckpt_best.pt"))
         elif not annealing:
             epochs_no_improve += 1
-            print(f"  no improve {epochs_no_improve}/{args.patience} "
-                  f"(best={best_loss:.3f} @e{best_epoch})", flush=True)
+            log(f"  no improve {epochs_no_improve}/{args.patience} (best={best_loss:.3f} @e{best_epoch})")
             if epochs_no_improve >= args.patience:
-                print(f"[train] converged — early stop at epoch {epoch} "
-                      f"(best loss {best_loss:.3f} @ epoch {best_epoch})", flush=True)
+                log(f"[train] converged — early stop at epoch {epoch} "
+                    f"(best loss {best_loss:.3f} @ epoch {best_epoch})")
                 break
+        if is_main:
+            torch.save({"model": core.state_dict(), "args": vars(args), "epoch": epoch},
+                       os.path.join(out_dir, "ckpt_last.pt"))
 
-        torch.save(
-            {"model": model.state_dict(), "args": vars(args), "epoch": epoch},
-            os.path.join(out_dir, "ckpt_last.pt"),
-        )
-
-    print(f"[train] done -> {out_dir} (best loss {best_loss:.3f} @ epoch {best_epoch})")
+    log(f"[train] done -> {out_dir} (best loss {best_loss:.3f} @ epoch {best_epoch})")
+    if is_dist:
+        dist.destroy_process_group()
 
 
 if __name__ == "__main__":
