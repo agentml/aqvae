@@ -97,21 +97,33 @@ class FactorizedHopfield(nn.Module):
             for _ in range(n_factors)
         ])
 
+    def _stacked_patterns(self) -> torch.Tensor:
+        """모든 factor 의 eff_patterns 를 (n_factors, D, K) 로 적층 (벡터화용)."""
+        return torch.stack([f.eff_patterns for f in self.factors], dim=0)
+
+    def _beta(self, beta):
+        if beta is not None:
+            return beta                                   # 스칼라(브로드캐스트)
+        return torch.stack([f.beta for f in self.factors]).view(1, self.n_factors, 1)
+
     def map(self, Y: torch.Tensor, context=None, beta=None) -> torch.Tensor:
+        """T(Y;C) factor별 Hopfield 를 batched einsum 으로 일괄 계산 (Python 루프 제거)."""
         B = Y.size(0)
         Yf = Y.view(B, self.n_factors, self.factor_dim)
-        Cf = None if context is None else context.view(B, self.n_factors, self.factor_dim)
-        outs = [self.factors[i].map(Yf[:, i],
-                                    context=None if Cf is None else Cf[:, i], beta=beta)
-                for i in range(self.n_factors)]
-        return torch.stack(outs, dim=1).view(B, self.dim)
+        q = Yf if context is None else Yf + context.view(B, self.n_factors, self.factor_dim)
+        P = self._stacked_patterns()                      # (F, D, K)
+        sim = torch.einsum("bfd,fdk->bfk", q, P)          # (B, F, K) = Xᵀq per-factor
+        w = F.softmax(self._beta(beta) * sim, dim=-1)     # (B, F, K)
+        out = torch.einsum("bfk,fdk->bfd", w, P)          # (B, F, D)
+        return out.reshape(B, self.dim)
 
     def assign(self, Y: torch.Tensor) -> torch.Tensor:
         """factor 별 이산 인덱스. (B, dim) -> (B, n_factors) long."""
         B = Y.size(0)
         Yf = Y.view(B, self.n_factors, self.factor_dim)
-        return torch.stack([self.factors[i].assign(Yf[:, i])
-                            for i in range(self.n_factors)], dim=1)
+        P = self._stacked_patterns()                      # (F, D, K)
+        d = torch.cdist(Yf.transpose(0, 1), P.transpose(1, 2))  # (F, B, K)
+        return d.argmin(-1).transpose(0, 1)               # (B, F)
 
     def grad_params(self, context):
         """IFT 라우팅 대상: context + 각 factor 의 patterns·log_beta."""
