@@ -30,7 +30,8 @@ def load_model(ckpt_path, device):
         n_factors=a["n_factors"], n_patterns=a["n_patterns"], beta=a["beta_start"],
         context_norm=True, context_scale=a["context_scale"], pattern_scale=a["pattern_scale"],
         unit_patterns=True, solver=a.get("solver", "fpi"),
-        solver_max_iter=a.get("solver_max_iter", 64))
+        solver_max_iter=a.get("solver_max_iter", 64),
+        variational=a.get("variational", False))
     m.load_state_dict(ck["model"])
     m.to(device).eval()
     return m, a, ck.get("epoch")

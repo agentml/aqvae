@@ -40,7 +40,8 @@ def load_any(ckpt_path, device):
                          beta=a["beta_start"], context_norm=True,
                          context_scale=a["context_scale"], pattern_scale=a["pattern_scale"],
                          unit_patterns=True, solver=a.get("solver", "fpi"),
-                         solver_max_iter=a.get("solver_max_iter", 64))
+                         solver_max_iter=a.get("solver_max_iter", 64),
+                         variational=a.get("variational", False))
     m.load_state_dict(ck["model"])
     m.to(device).eval()
     return m, a, arch, ck.get("epoch")
