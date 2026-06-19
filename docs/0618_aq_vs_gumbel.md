@@ -2,7 +2,7 @@
 
 > 세 방법 모두 "**미분가능한 이산 잠재**"를 다룬다. AQ가 Gumbel-Softmax·ST-Gumbel과
 > 어떻게 같고 다른지, 그리고 왜 AQ는 **샘플링 없이** 작동하는지 분석.
-> 관련: `proposal.md`, `categorical_aqvae_design.md`, `collapse_analysis.md`(포화-소실).
+> 관련: `0617_proposal.md`, `0618_categorical_aqvae_design.md`, `0617_collapse_analysis.md`(포화-소실).
 
 ---
 
@@ -48,7 +48,7 @@
 4. **읽기 구조의 유사점**: $y^\star=\sum_k w^\star_k X_k$는 형식상 "**codebook 위 Gumbel-softmax 가중 lookup**"과 닮음 — 단 (a) 노이즈 없음, (b) 일회성 아닌 고정점, (c) IFT 정확 gradient. AQ ≈ *"노이즈 없는, 동역학 기반, 정확-gradient 버전의 codebook attention"*.
 
 ## 7. ★정직한 핵심 뉘앙스 — "무편향"의 함정
-"AQ는 STE를 피한다"가 헤드라인이지만, **이산 극한($\beta\!\to\!\infty$)에서 AQ의 *정확* gradient는 0이 된다**(softmax 포화, `collapse_analysis.md`). 반면 **STE의 *편향* gradient는 그 극한에서도 nonzero** — 바로 그 편향이 이산 병목을 학습시키는 힘이다.
+"AQ는 STE를 피한다"가 헤드라인이지만, **이산 극한($\beta\!\to\!\infty$)에서 AQ의 *정확* gradient는 0이 된다**(softmax 포화, `0617_collapse_analysis.md`). 반면 **STE의 *편향* gradient는 그 극한에서도 nonzero** — 바로 그 편향이 이산 병목을 학습시키는 힘이다.
 > 즉 AQ는 "더 나은 gradient"가 아니라 **"정확하지만 사라지는 gradient"**, STE는 **"편향됐지만 살아있는 gradient"**. 둘 다 이산 극한에 약점이 있고, AQ의 약점은 **soft 영역 학습 + 어닐링**으로 푼다 — 이는 사실 **Gumbel의 온도 어닐링과 같은 처방**이다.
 - 차이점: AQ는 매 온도에서 gradient가 *정확*(완화 편향 없음)하고 forward가 *결정론적*(샘플 분산 없음). Gumbel은 저분산이나 완화 편향, ST-GS는 이산 forward이나 backward 편향.
 

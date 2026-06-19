@@ -2,7 +2,7 @@
 
 > 입장(position)·논의 문서. AQ(Attractor Quantization) 모델 — perception으로부터 supervision 없이
 > 이산·조합적(compositional) 개념을 attractor 동역학으로 형성 — 을 계산신경과학 관점에서 논한다.
-> 관련: `proposal.md`, `categorical_aqvae_design.md`, `related_paper/Discrete...attractor dynamics.md`(Nam 2024).
+> 관련: `0617_proposal.md`, `0618_categorical_aqvae_design.md`, `related_paper/Discrete...attractor dynamics.md`(Nam 2024).
 
 ---
 

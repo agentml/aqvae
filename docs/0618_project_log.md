@@ -1,7 +1,7 @@
 # attractor_vae 프로젝트 전체 작업 로그
 
 > 프로젝트 시작부터 Phase F 완주까지의 전 과정 기록(시간순). 의사결정·실험수치·막다른길·해결을 모두 포함.
-> 관련 상세 문서: `docs/proposal.md`(논문형 제안), `docs/design.md`(실무설계), `docs/collapse_analysis.md`(collapse 심층분석).
+> 관련 상세 문서: `docs/0617_proposal.md`(논문형 제안), `docs/0617_design.md`(실무설계), `docs/0617_collapse_analysis.md`(collapse 심층분석).
 > 환경: 3D Shapes(RGB 64×64×3, 480k), conda env `gram`, torch 2.10 cu128, 4× RTX 4090, numpy-only(sklearn·torchvision·PIL 없음).
 
 ---
@@ -67,7 +67,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 - **확률화 위치 결정**: (i) **deterministic AE** 확정(VQ-VAE처럼 비변분, KL 없음, $y^\star$ 직접 디코딩) vs (ii) variational(미룸).
 - **D1** 모델 작동(미분·형상 OK)하나 **즉시 collapse**: factor당 활성 attractor 1개(8/128), recon~1500 정체, dist→pat=0.000.
 
-### collapse 분석 (상세: `docs/collapse_analysis.md`)
+### collapse 분석 (상세: `docs/0617_collapse_analysis.md`)
 - **가설1 β 어닐링 → 기각**: 세 스케줄 모두 8/128. 단서 — **$c\_std$ 폭발**(74→542): 인코더가 context 크기로 β 통제 무력화.
 - **가설2 context 정규화 → 부분 기각**: $\|c\|$ 묶어도(1.47) collapse 유지. magnitude만 원인 아님.
 - **근본 원인 = softmax 포화**: effective temperature $\sim\beta\|X\|\|c\|$ 크면 one-hot → **exact IFT gradient가 진짜 ≈0**. → "정확한 gradient"가 이산 극한에서 **편향-nonzero STE보다 불리**. β·‖c‖ 상호대체라 β 단독 통제 무의미.
@@ -131,4 +131,4 @@ outputs/{c1_basins, interpret}/  (시각화)
 
 ## 미해결/다음 후보
 - scale factor 분리 개선, recon 격차 축소(K·차원·구조), β/K/스케줄 체계적 스윕(Phase E),
-  variational 확장(Nam식 분포·생성), `docs/results.md` 결과 정리.
+  variational 확장(Nam식 분포·생성), `docs/0618_results.md` 결과 정리.

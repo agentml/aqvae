@@ -1,7 +1,7 @@
 # attractor_vae 대화 로그 (turn-by-turn 재구성)
 
 > 사용자 발화와 어시스턴트 응답/행동을 시간순으로 기록. 원시 대화에 가깝게 재구성한 것(1:1 축자 덤프 아님).
-> 정리본은 `project_log.md`(과정), `results.md`(결과), `collapse_analysis.md`(collapse 심층).
+> 정리본은 `0618_project_log.md`(과정), `0618_results.md`(결과), `0617_collapse_analysis.md`(collapse 심층).
 
 ---
 
@@ -42,7 +42,7 @@ A: 레포 클론·분석. 이식 부품(solver, IFT, injection, 게이트) 식�
 A: 메모리 갱신(코딩·학습 둘 다 허락 먼저). 분석·설계까지만 진행하기로.
 
 **U: 새로운 모델 디자인 계획 md 만들자**
-A: docs/design.md 작성(설계공간·이식부품·IFT 수식·평가·로드맵·미결).
+A: docs/0617_design.md 작성(설계공간·이식부품·IFT 수식·평가·로드맵·미결).
 
 **U: 니 마음대로 쓰지마 다 지워 → (다시) 복원해봐**
 A: 삭제 후 복원. 사용자가 방향을 정하면 받아쓰기로.
@@ -87,7 +87,7 @@ A: 맞는 framing. 단 KL은 →0으로 당겨 반대 collapse 유발 → nonzer
 A: context_norm 추가했으나 여전히 collapse. **근본=포화** 재진단. 작은 스케일 soft 영역 → **collapse 깨짐**(recon 1500→333, 활성 36). "train soft, anneal to discrete" 원리 확립.
 
 **U: collapse 처리 과정 논문형식 md로 정리**
-A: docs/collapse_analysis.md 작성(가설·실험·기전·해결, 명제 P1–P5).
+A: docs/0617_collapse_analysis.md 작성(가설·실험·기전·해결, 명제 P1–P5).
 
 **U: D3 어닐링 설계해서 진행**
 A: unit_patterns+context_norm으로 effective temp=β 단일화. β1→{4,8,16} 어닐링 → **재collapse 없이** dist→pat↓·active↑·recon↓. sweet spot β8.
@@ -114,10 +114,10 @@ A: 확대 factor traversal 렌더(shape·orientation 시각 확인). 두 run 진
 A: **두 run 수렴**(loss 8.165 / 8.125) 확인. 수렴 모델로 **Phase F 전체 재평가** → Attractor가 fMIG·DCI-D·DCI-C 최고(VQ 추월), basin 확증, 4 step 충분. 결론 뒤집힘.
 
 **U: 처음부터 지금까지 대화 md로 저장**
-A: docs/project_log.md(과정 로그) 작성.
+A: docs/0618_project_log.md(과정 로그) 작성.
 
-**U: docs/results.md 정리 + 원시대화 로그도**
-A: docs/results.md(결과) + docs/conversation_log.md(본 문서) 작성.
+**U: docs/0618_results.md 정리 + 원시대화 로그도**
+A: docs/0618_results.md(결과) + docs/0618_conversation_log.md(본 문서) 작성.
 
 ---
 

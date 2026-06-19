@@ -1,6 +1,6 @@
 # attractor_vae — 설계 문서 (실무)
 
-> 논문 서술은 `docs/proposal.md`. 본 문서는 **결정사항 · 코드구조 · 로드맵 · 미결**에 집중한다.
+> 논문 서술은 `docs/0617_proposal.md`. 본 문서는 **결정사항 · 코드구조 · 로드맵 · 미결**에 집중한다.
 > 코드 구현은 별도 허락 후 시작.
 
 ---
@@ -71,7 +71,7 @@ src/
     implicit.py         # IFTAttach (이식·단순화)
     multistable.py      # ①well / ②hopfield / ③regularizer
   eval/                 # MIG·DCI·FactorVAE + attractor 진단(perturb·internalize)
-docs/{proposal.md,design.md}
+docs/{0617_proposal.md,0617_design.md}
 ```
 - baseline(`model.py`,`train.py`) 최소 변경·격리.
 

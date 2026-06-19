@@ -39,6 +39,29 @@ Attractor-AE는 VAE(KL 병목)보다 훨씬 낮고 VQ-VAE보다 약간 높다. (
 
 ---
 
+## 3b. 변분(Categorical AQ-VAE) + ablation (β_kl 스윕, K=32)
+deterministic AQ를 변분화(`--variational`, 학습 categorical prior + closed-form KL)하고, β_kl·K를 스윕한 7-모델 비교(수렴, n=20k):
+
+| model | recon↓ | 활성코드 | fMIG↑ | DCI-D↑ | DCI-C↑ | FactorVAE↑ |
+|---|---|---|---|---|---|---|
+| VAE | 28.5 | 7 dim | — | 0.388 | 0.254 | 0.902 |
+| VQ-VAE | **5.7** | 32 | 0.288 | 0.541 | 0.272 | **0.994** |
+| **AQ det (K16)** | 7.9 | 88/128 | 0.299 | **0.569** | **0.277** | 0.946 |
+| AQ 변분 β_kl=0.5 | 8.8 | 20/128 | 0.127 | 0.440 | 0.236 | 0.949 |
+| AQ 변분 β_kl=0.1 | 9.7 | 31/128 | 0.147 | 0.527 | 0.260 | 0.929 |
+| AQ 변분 β_kl=0.05 | 8.1 | 32/128 | 0.139 | 0.501 | 0.240 | 0.981 |
+| **AQ K=32 det** | 9.0 | 97/256 | **0.331** | 0.568 | 0.273 | 0.935 |
+
+**판독 (정직하게)**:
+1. **변분(categorical KL)은 disentanglement를 악화** — 모든 β_kl(0.05~0.5)에서 fMIG 0.13~0.15 (det 0.30 대비↓), DCI-D도↓. "KL=정보병목→깨끗한 분리" 기대가 *반대*로 작동(KL이 factor-code 정보량을 눌러 분리 흐려짐). → **변분의 가치는 분리가 아니라 *생성***.
+2. **변분 생성은 작동하나 흐릿** (`generated_e148.png`) — factorized prior가 비일관 조합 샘플(재구성 `recon_var_e148.png`은 선명). → autoregressive prior 또는 Gaussian-in-c 변형 필요.
+3. **K=32는 싼 disentanglement 이득** — fMIG **0.331(전체 최고)**. 코드 2배가 factor↔GT 정렬 개선(단 recon 9.0으로 미개선).
+4. **rate-distortion**: β_kl↓ → 활성코드↑·recon↑ (0.5→0.05: 20→32, 8.8→8.1)나 disentanglement는 전 구간 저조.
+
+→ **표현 품질(분리+recon)엔 deterministic AQ(또는 K=32)가 최선(VQ를 DCI에서 추월). 변분은 생성 능력을 얻는 대신 분리를 희생.**
+
+---
+
 ## 4. 의미 분석 (정성 + 정량)
 모델팩터(8)와 GT(6)의 NMI 행렬 + attractor purity + swap traversal.
 
@@ -103,6 +126,6 @@ Attractor-AE는 VAE(KL 병목)보다 훨씬 낮고 VQ-VAE보다 약간 높다. (
 1. recon이 VQ-VAE에 소폭 열위(7.9 vs 5.7).
 2. **scale factor 분리 실패**(shape와 entangle), 일부 GT 약한 중복.
 3. per-dim MIG는 다차원/factor 설계에 불리(metric 한계).
-4. 학습이 effective-temperature 어닐링에 민감(collapse 회피 위해 soft 시작 필수 — `docs/collapse_analysis.md`).
+4. 학습이 effective-temperature 어닐링에 민감(collapse 회피 위해 soft 시작 필수 — `docs/0617_collapse_analysis.md`).
 
 **다음**: scale 분리 개선, recon 격차 축소(K·구조), β/K 스윕(Phase E), variational 확장.

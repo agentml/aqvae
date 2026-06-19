@@ -2,13 +2,13 @@
 
 > AQ를 stochastic·생성 모델로 만드는 또 다른 길: 이산 코드를 샘플하는 대신
 > **연속 context $c$에 Gaussian 노이즈(reparameterization)** 를 주고, attractor가 이를 이산화.
-> 상태: **설계(미구현)**. 비교 대안: `categorical_aqvae_design.md`(이산 직접 샘플 대신 기댓값).
-> 관련: `collapse_analysis.md`(magnitude 규제), `aq_vs_gumbel.md`, `neuroscience_significance.md`.
+> 상태: **설계(미구현)**. 비교 대안: `0618_categorical_aqvae_design.md`(이산 직접 샘플 대신 기댓값).
+> 관련: `0617_collapse_analysis.md`(magnitude 규제), `0618_aq_vs_gumbel.md`, `0618_neuroscience_significance.md`.
 
 ---
 
 ## 1. 동기
-이산 코드 $k$에서 직접 샘플하면 Gumbel/STE 편향이 재도입된다(`aq_vs_gumbel.md`). 대신 **확률성을 연속 공간($c$)에 두면** — Gaussian **reparameterization**으로 *무편향·저분산* gradient를 쓰고, attractor가 그 연속 잠재를 이산화한다. 즉 "샘플 → 이산화"가 아니라 "**연속 샘플 → attractor 수렴 → 이산**".
+이산 코드 $k$에서 직접 샘플하면 Gumbel/STE 편향이 재도입된다(`0618_aq_vs_gumbel.md`). 대신 **확률성을 연속 공간($c$)에 두면** — Gaussian **reparameterization**으로 *무편향·저분산* gradient를 쓰고, attractor가 그 연속 잠재를 이산화한다. 즉 "샘플 → 이산화"가 아니라 "**연속 샘플 → attractor 수렴 → 이산**".
 
 ## 2. 구조 (생성 과정)
 $$x\xrightarrow{\text{enc}}(\mu_c,\sigma_c)\xrightarrow{\text{reparam}} c=\mu_c+\sigma_c\odot\varepsilon\ (\varepsilon\sim N(0,I))\xrightarrow{\text{attractor}} y^\star(c)\xrightarrow{\text{dec}}\hat x$$
@@ -19,8 +19,8 @@ $$\mathcal{L}=\underbrace{\mathrm{recon}(\hat x,x)}_{\text{decode}(y^\star)}+\be
 
 ## 3. ★핵심 시너지
 1. **Gumbel/STE 없는 stochastic** — Gaussian reparam = 무편향·저분산. AQ 정체성 유지하며 *진짜 VAE*.
-2. **collapse의 magnitude 규제를 KL이 겸함** — Gaussian KL의 $\mu^2$ 항이 $\|\mu_c\|$를 **unit-Gaussian shell(반경 $\sqrt d$)** 로 당김. *0이 아니라* 적정 반경 → 우리가 collapse 막으려 넣은 **`context_norm`을 KL이 대체**. (`collapse_analysis.md` §5의 "KL은 0으로 당겨 나쁘다"는 *연속 c*에서 해소: $N(0,I)$ 질량은 0이 아닌 반경 $\sqrt d$.) **σ가 collapse(→0)해도 $\mu^2$ 항이 magnitude를 계속 규제**.
-3. **calibrated 불확실성** — $\sigma_c$가 입력별로 학습 → **basin 경계 근처 애매한 입력은 큰 σ(코드 흔들림=stochastic), basin 깊은 확신 입력은 작은 σ(결정론)**. 범주지각의 불확실성과 호응(`neuroscience_significance.md`).
+2. **collapse의 magnitude 규제를 KL이 겸함** — Gaussian KL의 $\mu^2$ 항이 $\|\mu_c\|$를 **unit-Gaussian shell(반경 $\sqrt d$)** 로 당김. *0이 아니라* 적정 반경 → 우리가 collapse 막으려 넣은 **`context_norm`을 KL이 대체**. (`0617_collapse_analysis.md` §5의 "KL은 0으로 당겨 나쁘다"는 *연속 c*에서 해소: $N(0,I)$ 질량은 0이 아닌 반경 $\sqrt d$.) **σ가 collapse(→0)해도 $\mu^2$ 항이 magnitude를 계속 규제**.
+3. **calibrated 불확실성** — $\sigma_c$가 입력별로 학습 → **basin 경계 근처 애매한 입력은 큰 σ(코드 흔들림=stochastic), basin 깊은 확신 입력은 작은 σ(결정론)**. 범주지각의 불확실성과 호응(`0618_neuroscience_significance.md`).
 4. **생성 단순** — $c\sim N(0,I)$ → attractor → decode. categorical의 학습 prior/autoregressive 불필요. 이산 코드 분포는 $N(0,I)$의 basin pushforward(자동).
 
 ## 4. ★기하 결정 — context_norm 대체 (추천 A)

@@ -1,7 +1,7 @@
 # Categorical AQ-VAE — 설계
 
 > deterministic AQ-AE → 변분(Categorical VAE) 전환 설계. 상태: **설계(미구현)**. 구현은 허락 후.
-> 관련: `proposal.md`, `design.md`, `collapse_analysis.md`, `todo.md`(⑥ variational 확장).
+> 관련: `0617_proposal.md`, `0617_design.md`, `0617_collapse_analysis.md`, `0618_todo.md`(⑥ variational 확장).
 
 ---
 

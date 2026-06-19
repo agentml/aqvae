@@ -2,7 +2,7 @@
 
 > **문서 성격**: 연구 노트(논문 작성용 상세 기록). deterministic attractor-AE 학습 초기에 관측된
 > representation collapse를, 가설→실험→기전분석→해결 순으로 빠짐없이 기록한다.
-> **관련**: `docs/proposal.md`, `docs/design.md`, 부품 검증 `src/fixed_point/_verify_c*.py`,
+> **관련**: `docs/0617_proposal.md`, `docs/0617_design.md`, 부품 검증 `src/fixed_point/_verify_c*.py`,
 > 본 분석 실험 `src/_smoke_anneal.py`, `src/_smoke_ctxnorm.py`.
 > **환경**: 3D Shapes(RGB 64×64×3, 480k), z=32=8 factor×4dim, Modern Hopfield(K=16), RTX 4090.
 
