@@ -6,7 +6,7 @@
 """
 import torch
 
-from .multistable import FactorizedHopfield
+from ..fixed_point.multistable import FactorizedHopfield
 
 DT = torch.float64
 torch.manual_seed(0)

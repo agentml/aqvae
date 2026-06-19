@@ -8,8 +8,8 @@ recon 개선 + 활성 attractor 다양성 유지.
 import torch
 from torch.utils.data import DataLoader
 
-from .dataset_shapes3d import Shapes3D
-from .model_attractor_vae import AttractorVAE, attractor_loss
+from ..dataset_shapes3d import Shapes3D
+from ..model_attractor_vae import AttractorVAE, attractor_loss
 
 torch.manual_seed(0)
 STEPS = 400

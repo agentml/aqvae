@@ -1,32 +1,66 @@
-# attractor_vae
+# AQ — Attractor Quantization
 
-dSprites 데이터셋에 적용하는 (β-)VAE.
+**Attractor 동역학 + implicit differentiation으로 학습하는, 완전 미분가능한 이산 표현.**
+VQ-VAE의 argmin+straight-through(STE)를 대체한다: 이산화를 *attractor의 고정점*으로 정의하고,
+그 고정점을 IFT로 *정확히* 미분한다 (STE의 편향 없음, Gumbel의 노이즈 완화 없음).
 
-## 구성
-- `src/dataset.py` — dSprites 로더(없으면 자동 다운로드, mmap).
-- `src/model.py` — conv (β-)VAE. Bernoulli 디코더, KL은 표준정규 대비. `vae_loss(beta=...)`.
-- `src/train.py` — 단일 GPU 학습. 에폭마다 재구성 그리드(`recon_eXXX.png`) + 체크포인트(`ckpt.pt`) 저장.
+## 핵심 아이디어
+- 잠재를 factor별(예: 8 factor × 4dim)로 나누고, 각 factor에 **Modern Hopfield attractor**(학습된 저장 패턴 = 이산 개념)를 둔다.
+- 입력 context $c$가 동역학으로 **고정점 $y^\star=\sum_k w^\star_k X_k$** 까지 수렴 → 디코딩·재구성 → **전체 backprop**.
+- $\beta$(stiffness) 어닐링으로 soft→discrete. 디코더엔 argmax가 아니라 $y^\star$ 자체를 넣어 **미분 가능**.
+- 변분 확장: softmax 코드 $w^\star$를 categorical posterior로(또는 context에 Gaussian 노이즈) → 생성 모델.
 
-## 데이터셋
-dSprites: 64×64 이진 이미지 737,280장, 생성 인자 6개
-(color·shape·scale·orientation·posX·posY). 첫 실행 시 `data/`에 npz 자동 다운로드(~28MB).
+자세한 동기·설계는 [`docs/0617_proposal.md`](docs/0617_proposal.md), 문서 전체는 [`docs/README.md`](docs/README.md).
 
-## 학습
-수렴(early stopping)까지 학습한다. epoch 평균 loss가 `--patience` 에폭 동안
-`--min-delta` 이상 개선되지 않으면 종료. `--max-epochs`는 안전 상한.
-```bash
-# vanilla VAE (수렴까지)
-python -m src.train --beta 1.0 --latent-dim 10
-
-# beta-VAE (disentanglement)
-python -m src.train --beta 4.0 --latent-dim 10
+## 구조
 ```
-주요 인자: `--patience`(10), `--min-delta`(0.1), `--max-epochs`(200),
-`--batch-size`(256), `--lr`(1e-3), `--hidden`(256), `--num-workers`(8).
-결과는 `outputs/<run-name>/` 에 저장 — `ckpt_best.pt`/`ckpt_last.pt`,
-에폭별 재구성 `recon_eXXX.png`(위:원본/아래:재구성, 의존성 없는 PNG), `history.json`.
+src/
+  dataset.py, dataset_shapes3d.py   데이터 (dSprites, 3D Shapes; uint8 GPU 변환)
+  model.py(VAE) model_vqvae.py(VQ-VAE) model_attractor_vae.py(AQ + 변분)
+  train.py        --arch {vae,vqvae,attractor}, β 어닐링, DDP, --compile, --variational
+  utils.py        의존성 없는 PNG 저장
+  fixed_point/    solvers·implicit(IFT)·multistable(Hopfield) — 재사용 부품
+  eval/           interpret·disentangle·attractor_diag·attractor_viz·generate
+  experiments/    일회용 스모크(collapse 조사 재현)
+  tests/          _verify*(solver·IFT·Hopfield 검증)
+docs/             설계·결과·분석·신경과학 노트 (docs/README.md 인덱스)
+```
 
-## 모델 개요
-- 인코더: Conv ×4 (stride 2, 64→32→16→8→4) → FC → (mu, logvar).
-- 디코더: 대칭 ConvTranspose ×4 → 64×64 logits.
-- 손실: BCE(픽셀 합, 배치 평균) + β·KL.
+## 빠른 시작
+```bash
+pip install -r requirements.txt   # torch, numpy, h5py, matplotlib
+
+# deterministic AQ (3D Shapes, 무손실 속도설정)
+python -m src.train --arch attractor --dataset shapes3d --latent-dim 32 \
+  --batch-size 256 --beta-start 1.0 --beta-end 8.0 --anneal-epochs 40 \
+  --solver-max-iter 20 --compile
+
+# 변분 (Categorical AQ-VAE)
+python -m src.train --arch attractor ... --variational --beta-kl 0.05
+
+# 4-GPU DDP
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 -m src.train --arch attractor ...
+
+# 평가
+python -m src.eval.disentangle --ckpts <ckpt1> <ckpt2> ...
+python -m src.eval.interpret --ckpt <ckpt>        # NMI·purity·traversal
+python -m src.eval.generate  --ckpt <변분 ckpt>   # 생성 샘플
+```
+
+## 핵심 결과 (3D Shapes, 수렴)
+| | recon↓ | fMIG↑ | DCI-D↑ | DCI-C↑ |
+|---|---|---|---|---|
+| VAE | 28.5 | — | 0.420 | 0.276 |
+| VQ-VAE | **5.7** | 0.289 | 0.584 | 0.293 |
+| **AQ (deterministic)** | 7.9 | 0.299 | **0.617** | **0.302** |
+| AQ K=32 | 9.0 | **0.331** | 0.568 | 0.273 |
+| AQ 변분(생성가능) | 8.1–8.8 | 0.13–0.15 | 0.44–0.53 | — |
+
+- **AQ는 STE 없이 미분가능 이산 표현을 학습**, disentanglement(DCI)에서 **VQ-VAE 추월**, 해석가능 코드 + 검증된 attractor basin.
+- 변분은 **생성**을 얻으나 disentanglement는 희생(흐릿) → autoregressive/Gaussian prior가 후속 과제.
+- 전체 표·분석: [`docs/0618_results.md`](docs/0618_results.md).
+
+## 신경과학 연결
+지각으로부터 unsupervised 이산·조합 개념 형성을 attractor 동역학으로 — associative memory(Hopfield),
+범주지각, equilibrium propagation(국소 학습)과 연결. [`docs/0618_neuroscience_significance.md`](docs/0618_neuroscience_significance.md),
+[`docs/0618_local_learning.md`](docs/0618_local_learning.md).

@@ -5,7 +5,7 @@
 """
 import torch
 
-from .implicit import attach_ift_grad, solve_fixed_point
+from ..fixed_point.implicit import attach_ift_grad, solve_fixed_point
 
 torch.manual_seed(0)
 DT = torch.float64

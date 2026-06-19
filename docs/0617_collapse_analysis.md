@@ -2,8 +2,8 @@
 
 > **문서 성격**: 연구 노트(논문 작성용 상세 기록). deterministic attractor-AE 학습 초기에 관측된
 > representation collapse를, 가설→실험→기전분석→해결 순으로 빠짐없이 기록한다.
-> **관련**: `docs/0617_proposal.md`, `docs/0617_design.md`, 부품 검증 `src/fixed_point/_verify_c*.py`,
-> 본 분석 실험 `src/_smoke_anneal.py`, `src/_smoke_ctxnorm.py`.
+> **관련**: `docs/0617_proposal.md`, `docs/0617_design.md`, 부품 검증 `src/tests/_verify_c*.py`,
+> 본 분석 실험 `src/experiments/_smoke_anneal.py`, `src/experiments/_smoke_ctxnorm.py`.
 > **환경**: 3D Shapes(RGB 64×64×3, 480k), z=32=8 factor×4dim, Modern Hopfield(K=16), RTX 4090.
 
 ---
@@ -241,7 +241,7 @@ $={}$β로 **단일화**. soft warmup(앞 30%, β=1) 후 β를 선형으로 $\be
 ## 부록 A. 실험 설정·코드 포인터
 - 모델: `src/model_attractor_vae.py` (`AttractorVAE`, `attractor_loss`, `_norm_context`).
 - 부품: `src/fixed_point/{solvers,implicit,multistable}.py` (검증 `_verify_b/_verify_c1/_c2/_c3.py`).
-- collapse 실험: `src/_smoke_anneal.py`(β 어닐링), `src/_smoke_ctxnorm.py`(context 정규화·soft 영역).
+- collapse 실험: `src/experiments/_smoke_anneal.py`(β 어닐링), `src/experiments/_smoke_ctxnorm.py`(context 정규화·soft 영역).
 - 공통: 3D Shapes 256배치, Adam 1e-3, fpi/anderson solver, one-step IFT backward, adjoint_clip=10.
 - 진단량: `dist→pat`(=평균 $\|y^\star-\text{nearest pattern}\|$, 0이면 완전 이산/포화),
   `활성 attractor`(=배치에서 factor별 unique argmin 패턴 수 합, /128), `c_std`/`c_batch_std`.

@@ -11,8 +11,8 @@ import os
 
 import torch
 
-from .multistable import HopfieldAttractor
-from .solvers import anderson_solve, fpi_solve
+from ..fixed_point.multistable import HopfieldAttractor
+from ..fixed_point.solvers import anderson_solve, fpi_solve
 
 DT = torch.float64
 torch.manual_seed(0)
