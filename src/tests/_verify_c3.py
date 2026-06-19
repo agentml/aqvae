@@ -1,12 +1,12 @@
 """C3 검증 (일회용): factorized head (8×4D Hopfield).
 
-실행: python -m src.fixed_point._verify_c3
+실행: python -m src.attractors._verify_c3
 검증: (1) 형상, (2) factor 독립성(block-diagonal), (3) end-to-end 미분,
       (4) factor 별 이산 인덱스, (5) factor 별 multi-stability.
 """
 import torch
 
-from ..attractor import FactorizedHopfield
+from ..attractors.attractor import FactorizedHopfield
 
 DT = torch.float64
 torch.manual_seed(0)

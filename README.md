@@ -20,7 +20,7 @@ src/
   train.py        --arch {vae,vqvae,attractor}, β 어닐링, DDP, --compile, --variational
   utils.py        의존성 없는 PNG 저장
   attractor.py      FactorizedHopfield(Modern Hopfield 다중안정 헤드)
-  fixed_point/    solvers·implicit(IFT) — 재사용 부품
+  attractors/    solvers·implicit(IFT) — 재사용 부품
   eval/           interpret·disentangle·attractor_diag·attractor_viz·generate
   experiments/    일회용 스모크(collapse 조사 재현)
   tests/          _verify*(solver·IFT·Hopfield 검증)

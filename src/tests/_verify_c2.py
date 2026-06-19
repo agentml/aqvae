@@ -1,6 +1,6 @@
 """C2 검증 (일회용): Hopfield + solver + IFT 결합.
 
-실행: python -m src.fixed_point._verify_c2
+실행: python -m src.attractors._verify_c2
 
 검증:
   (A) exact-IFT gradient(패턴 X, β, context c) vs autograd-through-unroll 일치.
@@ -11,8 +11,8 @@
 """
 import torch
 
-from ..fixed_point.implicit import attach_ift_grad, solve_fixed_point
-from ..attractor import HopfieldAttractor
+from ..attractors.implicit import attach_ift_grad, solve_attractors
+from ..attractors.attractor import HopfieldAttractor
 
 DT = torch.float64
 torch.manual_seed(0)
@@ -30,7 +30,7 @@ def build(beta=6.0, learn_beta=True):
 def solve_and_attach(hop, c, bw_type, adjoint_clip=None, beta=None):
     """context c 주입, 고정점 solve 후 IFT grad 부착. 반환 y*."""
     cd = c.detach()
-    y_star_ng, info = solve_fixed_point(
+    y_star_ng, info = solve_attractors(
         lambda y: hop.map(y, context=cd, beta=beta), cd.clone(),
         solver="anderson", max_iter=300, tol=1e-12)
     params = [c, hop.patterns] + ([hop.log_beta] if hop.log_beta is not None else [])
@@ -93,7 +93,7 @@ def B_injection_contrast():
         dist = torch.cdist(y_inj.detach(), hop.patterns.t()).min(-1).values.mean().item()
         # 순수 retrieval
         cd = c.detach()
-        y_ng, _ = solve_fixed_point(lambda y: hop.map(y, beta=beta), cd.clone(),
+        y_ng, _ = solve_attractors(lambda y: hop.map(y, beta=beta), cd.clone(),
                                     solver="anderson", max_iter=300, tol=1e-12)
         c_re = cd.clone().requires_grad_(True)
         y_re = attach_ift_grad(lambda y: hop.map(y, beta=beta), y_ng, [c_re], bw_type="onestep")

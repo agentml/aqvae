@@ -9,7 +9,7 @@ Solve-the-Loop 공식 소스(MIT) `attractor/models/attractor/attractor.py` 의
 - bw_type="iterative"/"anderson": u = J^T u + v 를 수렴까지 풀어 *정확* (검증·정밀용).
 
 사용:
-    y_star_ng, info = solve_fixed_point(lambda y: T(y, c.detach()), y0, ...)
+    y_star_ng, info = solve_attractors(lambda y: T(y, c.detach()), y0, ...)
     y_star = attach_ift_grad(lambda y: T(y, c), y_star_ng, [c, *head.parameters()])
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ def _maybe_clip_jv(Jv: torch.Tensor, v: torch.Tensor, adjoint_clip) -> torch.Ten
     return Jv * scale.view(B, *([1] * (Jv.ndim - 1)))
 
 
-def solve_fixed_point(T, y0, solver: str = "anderson", max_iter: int = 30,
+def solve_attractors(T, y0, solver: str = "anderson", max_iter: int = 30,
                       tol: float = 1e-3, min_iter: int = 0, **solver_kwargs):
     """no-grad 로 y* = T(y*) 를 푼다. (T, y0 의 grad 는 무시 — forward 전용)"""
     name = solver

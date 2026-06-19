@@ -18,7 +18,7 @@
 | `attractor_loss` | `aq_loss` |
 | `--arch attractor` | `--arch aq` (로더는 기존 ckpt `attractor` 매핑 호환) |
 | eval/docs 용어 | AQ로 통일 |
-> `src/fixed_point/`(solver·IFT)는 일반 부품이라 유지.
+> `src/attractors/`(solver·IFT)는 일반 부품이라 유지.
 > GitHub repo: `agentml/aqvae` (private).
 
 ---

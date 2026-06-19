@@ -1,11 +1,11 @@
 """Phase B 검증 (일회용): solver(B1) + IFT gradcheck(B2).
 
-실행: python -m src.fixed_point._verify
+실행: python -m src.attractors._verify
 정확성 게이트 — 통과해야 Phase C(Hopfield) 진행.
 """
 import torch
 
-from ..fixed_point.implicit import attach_ift_grad, solve_fixed_point
+from ..attractors.implicit import attach_ift_grad, solve_attractors
 
 torch.manual_seed(0)
 DT = torch.float64
@@ -19,7 +19,7 @@ def b1_solver():
     y_target = 2 * b
     ok = True
     for name in ("fpi", "anderson"):
-        y_star, info = solve_fixed_point(T, torch.zeros(B, n, dtype=DT),
+        y_star, info = solve_attractors(T, torch.zeros(B, n, dtype=DT),
                                          solver=name, max_iter=200, tol=1e-12)
         err = (y_star - y_target).abs().max().item()
         print(f"  [B1 {name:8s}] iters={info['iters']:3d} converged={info['converged']} "
@@ -38,7 +38,7 @@ def b2_gradcheck():
     # forward: no-grad solve
     Wd, cd = W.detach(), c.detach()
     y0 = cd.clone()
-    y_star_ng, info = solve_fixed_point(lambda y: cd + y @ Wd.T, y0,
+    y_star_ng, info = solve_attractors(lambda y: cd + y @ Wd.T, y0,
                                         solver="anderson", max_iter=300, tol=1e-13)
 
     # exact IFT (iterative backward)

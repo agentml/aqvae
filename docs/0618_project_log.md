@@ -54,8 +54,8 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
   - **VAE(z=32)**: 수렴 **loss 47.31**(recon 29.5).
   - **VQ-VAE(z=32, 8 group × K=16 product 양자화 + STE)** `model_vqvae.py`: 초기 vq항 폭발(11654) 자기보정 → 수렴 **recon 5.7**(KL 없어 또렷).
 
-## Phase B — 고정점 머신 (`src/fixed_point/`)
-- `solvers.py`(이식), `implicit.py`(`attach_ift_grad`, `solve_fixed_point`, one-step/iterative/anderson backward — 단일 GPU 단순화).
+## Phase B — 고정점 머신 (`src/attractors/`)
+- `solvers.py`(이식), `implicit.py`(`attach_ift_grad`, `solve_attractors`, one-step/iterative/anderson backward — 단일 GPU 단순화).
 - **B 검증**(`_verify.py`): solver가 $T(y)=0.5y+b$의 $y^\star=2b$ 정확; **IFT gradient가 닫힌형·unroll과 1e-14 일치**(정확성 게이트 통과). one-step은 의도된 근사.
 
 ## Phase C — Modern Hopfield (`src/attractor.py`)
@@ -121,7 +121,7 @@ src/
   dataset/, utils.py
   model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_davae.py(DAVAE)
   train.py(--arch vae/vqvae/attractor, β 어닐링)
-  attractor.py + fixed_point/{solvers,implicit}.py + _verify*.py
+  attractor.py + attractors/{solvers,implicit}.py + _verify*.py
   eval/{interpret,disentangle,attractor_diag}.py
 docs/{proposal,design,collapse_analysis,project_log}.md
 related_paper/{solve_the_loop, Discrete...}.md, Attractor/(소스)

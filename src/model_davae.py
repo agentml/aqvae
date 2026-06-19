@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .attractor import FactorizedHopfield
+from .attractors.attractor import FactorizedHopfield
 
 
 @dataclass

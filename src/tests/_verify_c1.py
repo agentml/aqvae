@@ -1,6 +1,6 @@
 """C1 검증 (일회용): Hopfield 단독 multi-stability + β 노브 + 수축성.
 
-실행: python -m src.fixed_point._verify_c1
+실행: python -m src.attractors._verify_c1
 산출: outputs/c1_basins/beta_*.png (2D basin 맵) + 콘솔 수치표.
 
 Modern Hopfield 깨끗한 retrieval 조건: β·‖x‖²·(1-cos간격) ≫ 1.
@@ -11,8 +11,8 @@ import os
 
 import torch
 
-from ..attractor import HopfieldAttractor
-from ..fixed_point.solvers import anderson_solve, fpi_solve
+from ..attractors.attractor import HopfieldAttractor
+from ..attractors.solvers import anderson_solve, fpi_solve
 
 DT = torch.float64
 torch.manual_seed(0)
