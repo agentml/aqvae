@@ -12,7 +12,7 @@ A: 이어갈 작업이 없어 working dir 확인. gram 프로젝트만 진행 �
 A: `mkdir attractor_vae` 생성.
 
 **U: dsprite 데이터셋에 적용하는 vae 모델 만들어줘**
-A: 환경 확인(torch 2.10, 4×4090). PyTorch conv (β-)VAE 작성: dataset.py, model.py, train.py, utils.py(의존성 없는 PNG). dSprites 파일명 오류 수정. smoke 통과.
+A: 환경 확인(torch 2.10, 4×4090). PyTorch conv (β-)VAE 작성: dataset.py, model_vae.py, train.py, utils.py(의존성 없는 PNG). dSprites 파일명 오류 수정. smoke 통과.
 
 **U: train으로 vanilla VAE 30 에폭 돌려줘 → (중단) converge할 때까지 학습 하고 싶어**
 A: train.py를 수렴(early stopping)으로 변경, torchvision 의존 제거. 학습 시작.

@@ -4,7 +4,7 @@ attractor 모델과 동일한 factor 구조로 맞춘 **product(grouped) 양자�
 잠재 z(=32)를 n_groups=8 × group_dim=4 로 쪼개고, 각 그룹을 codebook(K=16, 4D)의
 최근접 코드로 양자화. straight-through estimator로 gradient 통과(← 본 연구가 대체하려는 방식).
 
-van den Oord et al. 2017. conv enc/dec 아키텍처는 src/model.py 와 동일.
+van den Oord et al. 2017. conv enc/dec 아키텍처는 src/model_vae.py 와 동일.
 """
 from __future__ import annotations
 

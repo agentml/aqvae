@@ -16,7 +16,7 @@ VQ-VAE의 argmin+straight-through(STE)를 대체한다: 이산화를 *attractor�
 ```
 src/
   dataset.py, dataset_shapes3d.py   데이터 (dSprites, 3D Shapes; uint8 GPU 변환)
-  model.py(VAE) model_vqvae.py(VQ-VAE) model_attractor_vae.py(AQ + 변분)
+  model_vae.py(VAE) model_vqvae.py(VQ-VAE) model_attractor_vae.py(AQ + 변분)
   train.py        --arch {vae,vqvae,attractor}, β 어닐링, DDP, --compile, --variational
   utils.py        의존성 없는 PNG 저장
   fixed_point/    solvers·implicit(IFT)·multistable(Hopfield) — 재사용 부품

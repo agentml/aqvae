@@ -186,7 +186,7 @@ DeepMind 3D Shapes: 64×64×**3(RGB)**, 480,000장, **6개 독립 factor, fully 
 2. **factor당 attractor 수 $K$**: 고정(예: 16) vs emergent. factor마다 다른 cardinality(4~15) 처리.
 3. **Backward**: one-step Neumann(기본) vs 정확 adjoint(Anderson).
 4. **확률화 위치**: 고정점 $y^\star$ → (mu, logvar) vs $y^\star$ 직접 디코딩. reparam과 고정점의 분리.
-5. **격리/구현 구조**: baseline 코드(`src/model.py`, `src/train.py`)와의 분리 방식.
+5. **격리/구현 구조**: baseline 코드(`src/model_vae.py`, `src/train.py`)와의 분리 방식.
 
 ---
 

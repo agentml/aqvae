@@ -15,7 +15,7 @@
 ## 1. 프로젝트 생성 & dSprites VAE 베이스라인
 - `/home/sjn/00_code/attractor_vae/` 생성.
 - 첫 요청: dSprites용 VAE. PyTorch, conv (β-)VAE(Higgins 2017 표준), 자동 다운로드 로더, 수렴(early stopping) 학습 작성.
-  - `src/dataset.py`, `src/model.py`(VAE+vae_loss), `src/train.py`, `src/utils.py`(의존성 없는 PNG 저장 — torchvision/PIL 없어 stdlib zlib로 직접 인코딩).
+  - `src/dataset.py`, `src/model_vae.py`(VAE+vae_loss), `src/train.py`, `src/utils.py`(의존성 없는 PNG 저장 — torchvision/PIL 없어 stdlib zlib로 직접 인코딩).
   - dSprites 파일명 오류(`co1sc1...`→`co1sh3sc6or40...`) 수정.
 - vanilla VAE(β=1) 학습 → **수렴 loss 33.97**(recon 12.3, KL 21.6), epoch 131 early stop. 파이프라인 sanity 확인.
 
@@ -49,7 +49,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 
 ## Phase A — 데이터 & 베이스라인
 - **A1** `src/dataset_shapes3d.py`: 3D Shapes 로더. 처음 h5py lazy-open → **HDF5 파일락 데드락**(워커들이 같은 .h5 열다 futex 멈춤). → **전체 RAM 적재**(uint8 5.5GB, COW fork-safe)로 수정. 480k·6 factor 확인.
-- **A2** `model.py` 일반화(하위호환): `in_channels`, `vae_loss(recon_type)` 추가.
+- **A2** `model_vae.py` 일반화(하위호환): `in_channels`, `vae_loss(recon_type)` 추가.
 - **A3/A4** 베이스라인 동시 학습(GPU0/1):
   - **VAE(z=32)**: 수렴 **loss 47.31**(recon 29.5).
   - **VQ-VAE(z=32, 8 group × K=16 product 양자화 + STE)** `model_vqvae.py`: 초기 vq항 폭발(11654) 자기보정 → 수렴 **recon 5.7**(KL 없어 또렷).
@@ -119,7 +119,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 ```
 src/
   dataset.py, dataset_shapes3d.py, utils.py
-  model.py(VAE), model_vqvae.py(VQ-VAE), model_attractor_vae.py(AttractorVAE)
+  model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_attractor_vae.py(AttractorVAE)
   train.py(--arch vae/vqvae/attractor, β 어닐링)
   fixed_point/{solvers,implicit,multistable}.py + _verify*.py
   eval/{interpret,disentangle,attractor_diag}.py

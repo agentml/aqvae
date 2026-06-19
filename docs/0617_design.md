@@ -62,7 +62,7 @@ x(RGB) ─conv enc─▶ c ∈ R^32 ──(8×4 분할)──▶ c_1..c_8
 ## 6. 코드 구조 (제안, 구현은 허락 후)
 ```
 src/
-  model.py              # 기존 VAE (baseline, 불변)
+  model_vae.py              # 기존 VAE (baseline, 불변)
   dataset.py            # dSprites (sanity) + 3D Shapes(h5py) 추가
   train.py              # --arch {vae,vqvae,attractor} 플래그
   model_attractor.py    # AttractorVAE: enc → factor별 attractor → dec
@@ -73,7 +73,7 @@ src/
   eval/                 # MIG·DCI·FactorVAE + attractor 진단(perturb·internalize)
 docs/{0617_proposal.md,0617_design.md}
 ```
-- baseline(`model.py`,`train.py`) 최소 변경·격리.
+- baseline(`model_vae.py`,`train.py`) 최소 변경·격리.
 
 ---
 
