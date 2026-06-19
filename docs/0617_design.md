@@ -65,7 +65,7 @@ src/
   model_vae.py              # 기존 VAE (baseline, 불변)
   dataset.py            # dSprites (sanity) + 3D Shapes(h5py) 추가
   train.py              # --arch {vae,vqvae,attractor} 플래그
-  model_attractor.py    # AttractorVAE: enc → factor별 attractor → dec
+  model_attractor.py    # DAVAE: enc → factor별 attractor → dec
   fixed_point/
     solvers.py          # anderson/fpi (이식)
     implicit.py         # IFTAttach (이식·단순화)

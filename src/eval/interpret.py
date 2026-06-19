@@ -17,7 +17,7 @@ import torch
 from torch.utils.data import DataLoader, Subset
 
 from ..dataset_shapes3d import Shapes3D, FACTOR_NAMES, FACTOR_SIZES
-from ..model_attractor_vae import AttractorVAE
+from ..model_attractor_vae import DAVAE
 from ..utils import make_grid, save_rgb_png
 
 
@@ -25,7 +25,7 @@ def load_model(ckpt_path, device):
     ck = torch.load(ckpt_path, map_location=device, weights_only=False)
     a = ck["args"]
     in_ch = 3 if a["dataset"] == "shapes3d" else 1
-    m = AttractorVAE(
+    m = DAVAE(
         latent_dim=a["latent_dim"], hidden=a["hidden"], in_channels=in_ch,
         n_factors=a["n_factors"], n_patterns=a["n_patterns"], beta=a["beta_start"],
         context_norm=True, context_scale=a["context_scale"], pattern_scale=a["pattern_scale"],

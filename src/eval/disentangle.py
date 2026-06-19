@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, Subset
 from ..dataset_shapes3d import Shapes3D, FACTOR_NAMES, FACTOR_SIZES
 from ..model_vae import VAE
 from ..model_vqvae import VQVAE
-from ..model_attractor_vae import AttractorVAE
+from ..model_attractor_vae import DAVAE
 
 NF_GT = 6
 
@@ -35,7 +35,7 @@ def load_any(ckpt_path, device):
                   n_groups=a["n_groups"], codebook_size=a["codebook_size"],
                   commitment=a["commitment"])
     else:
-        m = AttractorVAE(latent_dim=a["latent_dim"], hidden=a["hidden"], in_channels=in_ch,
+        m = DAVAE(latent_dim=a["latent_dim"], hidden=a["hidden"], in_channels=in_ch,
                          n_factors=a["n_factors"], n_patterns=a["n_patterns"],
                          beta=a["beta_start"], context_norm=True,
                          context_scale=a["context_scale"], pattern_scale=a["pattern_scale"],

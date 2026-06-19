@@ -65,4 +65,4 @@ factor별 k_i ~ Cat(softmax(π_i))  →  y_gen_i = X_i[:,k_i]  →  concat  → 
 1. prior: **학습 factorized**(추천) vs uniform vs autoregressive.
 2. β_KL 스케줄(워밍업 길이·최대값), Hopfield β와의 조율.
 3. recon: $y^\star$ 디코딩(추천, 무샘플) vs 샘플 디코딩(Gumbel/STE — 비추천).
-4. 별도 `AQVAE` 클래스 vs 기존 `AttractorVAE`에 `--variational` 플래그.
+4. 별도 `AQVAE` 클래스 vs 기존 `DAVAE`에 `--variational` 플래그.

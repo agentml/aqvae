@@ -119,7 +119,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 ```
 src/
   dataset.py, dataset_shapes3d.py, utils.py
-  model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_attractor_vae.py(AttractorVAE)
+  model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_attractor_vae.py(DAVAE)
   train.py(--arch vae/vqvae/attractor, β 어닐링)
   fixed_point/{solvers,implicit,multistable}.py + _verify*.py
   eval/{interpret,disentangle,attractor_diag}.py

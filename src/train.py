@@ -24,7 +24,7 @@ from .dataset import DSprites
 from .dataset_shapes3d import Shapes3D, prep_batch
 from .model_vae import VAE, vae_loss
 from .model_vqvae import VQVAE, vqvae_loss
-from .model_attractor_vae import AttractorVAE, attractor_loss, aqvae_loss
+from .model_attractor_vae import DAVAE, attractor_loss, aqvae_loss
 from .utils import make_grid, save_gray_png, save_rgb_png
 
 
@@ -117,7 +117,7 @@ def build_model(args, in_channels):
         return VQVAE(latent_dim=args.latent_dim, hidden=args.hidden, in_channels=in_channels,
                      n_groups=args.n_groups, codebook_size=args.codebook_size,
                      commitment=args.commitment)
-    return AttractorVAE(latent_dim=args.latent_dim, hidden=args.hidden, in_channels=in_channels,
+    return DAVAE(latent_dim=args.latent_dim, hidden=args.hidden, in_channels=in_channels,
                         n_factors=args.n_factors, n_patterns=args.n_patterns,
                         beta=args.beta_start, context_norm=True,
                         context_scale=args.context_scale, pattern_scale=args.pattern_scale,

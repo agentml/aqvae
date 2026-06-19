@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from ..dataset_shapes3d import Shapes3D
-from ..model_attractor_vae import AttractorVAE, attractor_loss
+from ..model_attractor_vae import DAVAE, attractor_loss
 
 torch.manual_seed(0)
 STEPS = 300
@@ -34,7 +34,7 @@ def run(tag, beta, **mkw):
     loader = DataLoader(ds, batch_size=256, shuffle=True, num_workers=6, drop_last=True)
     it = stream(loader)
     xev = next(it).cuda()
-    m = AttractorVAE(latent_dim=32, in_channels=3, n_patterns=NP, beta=beta, **mkw).cuda()
+    m = DAVAE(latent_dim=32, in_channels=3, n_patterns=NP, beta=beta, **mkw).cuda()
     opt = torch.optim.Adam(m.parameters(), 1e-3)
     print(f"\n[{tag}] beta={beta} {mkw}")
     for i in range(STEPS):

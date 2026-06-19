@@ -239,7 +239,7 @@ $={}$β로 **단일화**. soft warmup(앞 30%, β=1) 후 β를 선형으로 $\be
 ---
 
 ## 부록 A. 실험 설정·코드 포인터
-- 모델: `src/model_attractor_vae.py` (`AttractorVAE`, `attractor_loss`, `_norm_context`).
+- 모델: `src/model_attractor_vae.py` (`DAVAE`, `attractor_loss`, `_norm_context`).
 - 부품: `src/fixed_point/{solvers,implicit,multistable}.py` (검증 `_verify_b/_verify_c1/_c2/_c3.py`).
 - collapse 실험: `src/experiments/_smoke_anneal.py`(β 어닐링), `src/experiments/_smoke_ctxnorm.py`(context 정규화·soft 영역).
 - 공통: 3D Shapes 256배치, Adam 1e-3, fpi/anderson solver, one-step IFT backward, adjoint_clip=10.

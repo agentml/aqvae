@@ -9,7 +9,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from ..dataset_shapes3d import Shapes3D
-from ..model_attractor_vae import AttractorVAE, attractor_loss
+from ..model_attractor_vae import DAVAE, attractor_loss
 
 torch.manual_seed(0)
 STEPS = 400
@@ -36,7 +36,7 @@ def run(tag, sched):
     it = stream(loader)
     xev = next(it).cuda()[:2000] if False else None
     xev = next(it).cuda()  # 256 고정 eval 배치
-    m = AttractorVAE(latent_dim=32, in_channels=3, n_patterns=NP, beta=2.0).cuda()
+    m = DAVAE(latent_dim=32, in_channels=3, n_patterns=NP, beta=2.0).cuda()
     opt = torch.optim.Adam(m.parameters(), 1e-3)
     print(f"\n[{tag}]")
     for i in range(STEPS):

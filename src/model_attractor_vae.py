@@ -28,7 +28,7 @@ class AttractorOutput:
     w: torch.Tensor = None       # (B, n_factors, K) softmax 코드 = categorical posterior(변분용)
 
 
-class AttractorVAE(nn.Module):
+class DAVAE(nn.Module):
     def __init__(self, latent_dim: int = 32, hidden: int = 256, in_channels: int = 3,
                  n_factors: int = 8, n_patterns: int = 16, beta: float = 2.0,
                  pattern_scale: float = 3.0, solver: str = "fpi",

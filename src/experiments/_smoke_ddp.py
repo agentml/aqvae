@@ -10,7 +10,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from ..model_attractor_vae import AttractorVAE, attractor_loss
+from ..model_attractor_vae import DAVAE, attractor_loss
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
     dev = torch.device("cuda", local)
     torch.manual_seed(0)
 
-    m = AttractorVAE(latent_dim=32, in_channels=3, n_patterns=16, context_norm=True,
+    m = DAVAE(latent_dim=32, in_channels=3, n_patterns=16, context_norm=True,
                      context_scale=1.0, pattern_scale=1.0, unit_patterns=True,
                      solver="fpi", solver_max_iter=20).to(dev)
     ddp = DDP(m, device_ids=[local], find_unused_parameters=True)
