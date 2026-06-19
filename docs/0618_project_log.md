@@ -58,7 +58,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 - `solvers.py`(이식), `implicit.py`(`attach_ift_grad`, `solve_fixed_point`, one-step/iterative/anderson backward — 단일 GPU 단순화).
 - **B 검증**(`_verify.py`): solver가 $T(y)=0.5y+b$의 $y^\star=2b$ 정확; **IFT gradient가 닫힌형·unroll과 1e-14 일치**(정확성 게이트 통과). one-step은 의도된 근사.
 
-## Phase C — Modern Hopfield (`src/fixed_point/multistable.py`)
+## Phase C — Modern Hopfield (`src/attractor.py`)
 - **C1** 단독 거동: K=16 패턴 고정, β 스윕. **저 β=1 attractor(병합) → 고 β=K개 분리**(distinct 1→16), 고 β서 dist→pat→0, 안정점 specRad<1. basin 맵 시각화로 multi-stability 확증. (패턴노름 R=3 필요 — retrieval 조건 $\beta\|X\|^2(1-\cos)\gg1$.)
 - **C2** solver+IFT 결합: IFT 1e-14 일치. **중요 발견 — persistent injection 필수**: 순수 retrieval(query-as-init)은 $\partial y^\star/\partial c\approx0$(STE 문제 재현), injection은 nonzero gradient. 그리고 **discreteness↔gradient trade-off** 정량화(저β grad↑·이산↓, 고β 이산↑·grad→0=softmax 포화).
 - **C3** factorized head: 8×4D 독립. **fpi가 factor 독립 보장**(anderson은 α 전역결합). end-to-end 미분 확인.
@@ -121,7 +121,7 @@ src/
   dataset/, utils.py
   model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_davae.py(DAVAE)
   train.py(--arch vae/vqvae/attractor, β 어닐링)
-  fixed_point/{solvers,implicit,multistable}.py + _verify*.py
+  attractor.py + fixed_point/{solvers,implicit}.py + _verify*.py
   eval/{interpret,disentangle,attractor_diag}.py
 docs/{proposal,design,collapse_analysis,project_log}.md
 related_paper/{solve_the_loop, Discrete...}.md, Attractor/(소스)

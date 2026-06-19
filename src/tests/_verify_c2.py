@@ -12,7 +12,7 @@
 import torch
 
 from ..fixed_point.implicit import attach_ift_grad, solve_fixed_point
-from ..fixed_point.multistable import HopfieldAttractor
+from ..attractor import HopfieldAttractor
 
 DT = torch.float64
 torch.manual_seed(0)

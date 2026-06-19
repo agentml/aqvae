@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .fixed_point.multistable import FactorizedHopfield
+from .attractor import FactorizedHopfield
 
 
 @dataclass

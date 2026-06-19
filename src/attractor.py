@@ -147,7 +147,7 @@ class FactorizedHopfield(nn.Module):
     def infer(self, context: torch.Tensor, bw_type: str = "onestep", adjoint_clip=None,
               beta=None, solver: str = "anderson", max_iter: int = 50, tol: float = 1e-4):
         """context(B,dim) -> 고정점 y*(B,dim), IFT grad 부착. Phase D 에서 호출."""
-        from .implicit import attach_ift_grad, solve_fixed_point
+        from .fixed_point.implicit import attach_ift_grad, solve_fixed_point
         cd = context.detach()
         y_ng, info = solve_fixed_point(lambda Y: self.map(Y, context=cd, beta=beta),
                                        cd.clone(), solver=solver, max_iter=max_iter, tol=tol)
