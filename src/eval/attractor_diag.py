@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from ..dataset_shapes3d import Shapes3D
+from ..dataset.dataset_shapes3d import Shapes3D
 from .interpret import load_model
 
 

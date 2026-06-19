@@ -8,7 +8,7 @@ recon 개선 + 활성 attractor 다양성 유지.
 import torch
 from torch.utils.data import DataLoader
 
-from ..dataset_shapes3d import Shapes3D
+from ..dataset.dataset_shapes3d import Shapes3D
 from ..model_davae import DAVAE, attractor_loss
 
 torch.manual_seed(0)

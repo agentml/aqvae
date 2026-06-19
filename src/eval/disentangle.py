@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from ..dataset_shapes3d import Shapes3D, FACTOR_NAMES, FACTOR_SIZES
+from ..dataset.dataset_shapes3d import Shapes3D, FACTOR_NAMES, FACTOR_SIZES
 from ..model_vae import VAE
 from ..model_vqvae import VQVAE
 from ..model_davae import DAVAE

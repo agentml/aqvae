@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from ..dataset_shapes3d import Shapes3D, prep_batch
+from ..dataset.dataset_shapes3d import Shapes3D, prep_batch
 from ..utils import make_grid, save_rgb_png
 from .interpret import load_model
 

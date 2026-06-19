@@ -8,7 +8,7 @@ unit_patterns + context_norm 으로 effective temp = β·s 단일화. β 를 sof
 import torch
 from torch.utils.data import DataLoader
 
-from ..dataset_shapes3d import Shapes3D
+from ..dataset.dataset_shapes3d import Shapes3D
 from ..model_davae import DAVAE, attractor_loss
 
 torch.manual_seed(0)

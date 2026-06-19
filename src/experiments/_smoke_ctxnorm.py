@@ -6,7 +6,7 @@ baseline(정규화 X)은 8/128 collapse. 정규화 on 에서 활성 attractor↑
 import torch
 from torch.utils.data import DataLoader
 
-from ..dataset_shapes3d import Shapes3D
+from ..dataset.dataset_shapes3d import Shapes3D
 from ..model_davae import DAVAE, attractor_loss
 
 torch.manual_seed(0)
