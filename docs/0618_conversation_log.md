@@ -72,7 +72,7 @@ A: C1 상세(모듈·β스윕·basin raster·수축성). 구현·실행 → mult
 A: 정확한 지적. assign은 진단 전용(argmin), forward엔 $y^\star$ 자체를 디코딩 → 미분가능. VQ와의 차이 설명.
 
 **U: Phase D 계획 → (i) deterministic AE로 D1 진행**
-A: D 계획(확률화 위치 결정). model_attractor_vae.py 작성. **즉시 collapse**(8/128, recon 1500) 발견.
+A: D 계획(확률화 위치 결정). model_davae.py 작성. **즉시 collapse**(8/128, recon 1500) 발견.
 
 **U: 먼저 β 어닐링 가설을 빠른 스모크로 검증**
 A: 3 스케줄 학습 → 전부 collapse, **c_std 폭발** 단서. 어닐링 가설 기각.

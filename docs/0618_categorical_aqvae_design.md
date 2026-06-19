@@ -42,7 +42,7 @@ factor별 k_i ~ Cat(softmax(π_i))  →  y_gen_i = X_i[:,k_i]  →  concat  → 
 
 ## 7. 구현 변경
 - `FactorizedHopfield.infer`: 고정점에서 **$w^\star$도 반환**(수렴 $y^\star$에서 softmax 재계산, 한 줄).
-- `AQVAE`(model_attractor_vae 확장): factor별 prior 로짓 `pi=nn.Parameter(K)`, `forward`가 $w^\star$ 노출, `generate(n)` 메서드.
+- `AQVAE`(model_davae 확장): factor별 prior 로짓 `pi=nn.Parameter(K)`, `forward`가 $w^\star$ 노출, `generate(n)` 메서드.
 - `aq_vae_loss`: MSE + β_KL·Σ KL($w^\star$‖softmax(π)). β_KL 스케줄.
 - `train.py`: KL 로깅, β_KL 워밍업(어닐링과 조율).
 

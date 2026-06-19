@@ -24,7 +24,7 @@ from .dataset import DSprites
 from .dataset_shapes3d import Shapes3D, prep_batch
 from .model_vae import VAE, vae_loss
 from .model_vqvae import VQVAE, vqvae_loss
-from .model_attractor_vae import DAVAE, attractor_loss, aqvae_loss
+from .model_davae import DAVAE, attractor_loss, aqvae_loss
 from .utils import make_grid, save_gray_png, save_rgb_png
 
 

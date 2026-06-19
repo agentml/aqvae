@@ -14,7 +14,7 @@
 | `FactorizedHopfield` (핵심 레이어) | `AQLayer` (또는 `AQ`) |
 | `HopfieldAttractor` (단일 factor) | `AQUnit` (또는 유지) |
 | `DAVAE` | `AQVAE` |
-| `model_attractor_vae.py` | `model_aqvae.py` |
+| `model_davae.py` | `model_aqvae.py` |
 | `attractor_loss` | `aq_loss` |
 | `--arch attractor` | `--arch aq` (로더는 기존 ckpt `attractor` 매핑 호환) |
 | eval/docs 용어 | AQ로 통일 |

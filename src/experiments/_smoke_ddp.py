@@ -10,7 +10,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from ..model_attractor_vae import DAVAE, attractor_loss
+from ..model_davae import DAVAE, attractor_loss
 
 
 def main():

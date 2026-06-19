@@ -63,7 +63,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 - **C2** solver+IFT 결합: IFT 1e-14 일치. **중요 발견 — persistent injection 필수**: 순수 retrieval(query-as-init)은 $\partial y^\star/\partial c\approx0$(STE 문제 재현), injection은 nonzero gradient. 그리고 **discreteness↔gradient trade-off** 정량화(저β grad↑·이산↓, 고β 이산↑·grad→0=softmax 포화).
 - **C3** factorized head: 8×4D 독립. **fpi가 factor 독립 보장**(anderson은 α 전역결합). end-to-end 미분 확인.
 
-## Phase D — 모델 조립 & collapse saga (`src/model_attractor_vae.py`)
+## Phase D — 모델 조립 & collapse saga (`src/model_davae.py`)
 - **확률화 위치 결정**: (i) **deterministic AE** 확정(VQ-VAE처럼 비변분, KL 없음, $y^\star$ 직접 디코딩) vs (ii) variational(미룸).
 - **D1** 모델 작동(미분·형상 OK)하나 **즉시 collapse**: factor당 활성 attractor 1개(8/128), recon~1500 정체, dist→pat=0.000.
 
@@ -119,7 +119,7 @@ de-risk 순서로: A(데이터·베이스라인) → B(solver+IFT 단독검증) 
 ```
 src/
   dataset.py, dataset_shapes3d.py, utils.py
-  model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_attractor_vae.py(DAVAE)
+  model_vae.py(VAE), model_vqvae.py(VQ-VAE), model_davae.py(DAVAE)
   train.py(--arch vae/vqvae/attractor, β 어닐링)
   fixed_point/{solvers,implicit,multistable}.py + _verify*.py
   eval/{interpret,disentangle,attractor_diag}.py
