@@ -15,7 +15,7 @@
 ## 1. 프로젝트 생성 & dSprites VAE 베이스라인
 - `/home/sjn/00_code/attractor_vae/` 생성.
 - 첫 요청: dSprites용 VAE. PyTorch, conv (β-)VAE(Higgins 2017 표준), 자동 다운로드 로더, 수렴(early stopping) 학습 작성.
-  - `src/dataset.py`, `src/model_vae.py`(VAE+vae_loss), `src/train.py`, `src/utils.py`(의존성 없는 PNG 저장 — torchvision/PIL 없어 stdlib zlib로 직접 인코딩).
+  - `src/dataset_dsprites.py`, `src/model_vae.py`(VAE+vae_loss), `src/train.py`, `src/utils.py`(의존성 없는 PNG 저장 — torchvision/PIL 없어 stdlib zlib로 직접 인코딩).
   - dSprites 파일명 오류(`co1sc1...`→`co1sh3sc6or40...`) 수정.
 - vanilla VAE(β=1) 학습 → **수렴 loss 33.97**(recon 12.3, KL 21.6), epoch 131 early stop. 파이프라인 sanity 확인.
 

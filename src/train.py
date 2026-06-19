@@ -20,7 +20,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 
-from .dataset import DSprites
+from .dataset_dsprites import DSprites
 from .dataset_shapes3d import Shapes3D, prep_batch
 from .model_vae import VAE, vae_loss
 from .model_vqvae import VQVAE, vqvae_loss
